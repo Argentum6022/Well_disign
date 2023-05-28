@@ -1,13 +1,9 @@
-import plotly
-import plotly.graph_objs as go
-import plotly.express as px
-from plotly.subplots import make_subplots
-import numpy as np
-import pandas as pd
-#H=[100,200,540,750,1300]
-#Pre=[1,2,5,8,15]
-#H_course=40
-#H_conductor=300
+from matplotlib import pyplot as plt
+
+H=[500,1000,1500,2000,2500,3000]
+Pre=[4.9,9.8,14.7,19.6,24.5,28.5]
+H_course=40
+H_conductor=300
 
 
 def CPG(H,Pre,H_course,H_conductor):
@@ -24,7 +20,6 @@ def CPG(H,Pre,H_course,H_conductor):
         Phs.append(1000*9.81*H[i]*10**-6)
         Ka.append(round(Pre[i]/Phs[i],3))
         Kfr.append(round(Pfr[i]/Phs[i],3))
-    fig =go.Figure()
     H_fig=H.copy()
     Ka_fig=Ka.copy()
     Kfr_fig=Kfr.copy()
@@ -33,29 +28,26 @@ def CPG(H,Pre,H_course,H_conductor):
     for l in range(len(Ka_fig)-1):
         if Ka_fig[l]!=Ka_fig[l+1]:
             s+=1
-    while j<n+s:                                  # Выравнивание графика пластовых давлений
+    while j<=n+s:                                  # Выравнивание графика пластовых давлений
         try:
                 Ka_fig.insert(j+1,Ka_fig[j])
                 H_fig.insert(j+1,H_fig[j+1])
         except:
-                print('error')
+                print('error1')
         j+=2
     Ka_fig.insert(0, Ka_fig[0])
     H_fig.insert(0, 0)
-    H_fig.append(H_fig[-1]+300)
-    Ka_fig.append(Ka_fig[-1])
 
-    fig.add_trace(go.Scatter(x=Ka_fig, y=H_fig,name='P пластовое<sup></sup>'))
 
+    plt.plot(Ka_fig,H_fig,'m',label='P пластовое',lw=3)
     k=0
-    while k<n+s:                                     # Выравнивание графика давлений насыщения
+    while k<=n+s:                                     # Выравнивание графика давлений насыщения
         try:
                 Kfr_fig.insert(k+1,Kfr_fig[k])
         except:
-                print('error')
+                print('error2')
         k+=2
     Kfr_fig.insert(0, Kfr_fig[0])
-    Kfr_fig.append(Kfr_fig[-1])
     for p in Kfr_fig:
         Kgr.append(p*1.2)
     for k in range(len(H_fig)):
@@ -65,15 +57,14 @@ def CPG(H,Pre,H_course,H_conductor):
         elif H_fig[k]>1200:
             Kaz.append(Ka_fig[k]*1.05)
             Kfrz.append(Kfr_fig[k]*0.95)
-    fig.add_trace(go.Scatter(x=Kfr_fig, y=H_fig,name='P насыщения<sup></sup>'))
-    fig.add_trace(go.Scatter(x=Kgr, y=H_fig,name='P гидроразрыва<sup></sup>'))
-    fig.add_trace(go.Scatter(x=Kaz, y=H_fig,name='P граничное<sup></sup>'))
-    fig.add_trace(go.Scatter(x=Kfrz, y=H_fig,name='P граничное<sup></sup>'))
-    fig.update_layout(legend_orientation="h",
-                title="График совмещенных давлений",
-                xaxis_title="Градиент давлений, МПа/100м",
-                yaxis_title="Глубина спуска колонн, м",
-                margin=dict(l=30, r=30, t=30, b=30))
+
+    plt.plot(Kfr_fig,H_fig,'c',label='P насыщения',lw=3)
+    plt.plot(Kgr,H_fig,'r',label='P гидроразрыва',lw=3)
+    plt.plot(Kaz,H_fig,'g',label='P граничное',lw=3)
+    plt.plot(Kfrz,H_fig,'b',label='P граничное',lw=3)
+    plt.title("График совмещенных давлений")
+    plt.ylabel('Глубина спуска колонн, м')
+    plt.xlabel('Градиент давлений, МПа/100м')
 
     intervals=0
     H_intervals=[0]
@@ -98,14 +89,14 @@ def CPG(H,Pre,H_course,H_conductor):
             H_well.append(H_intervals[-1])
             H_well.append(H_intervals[-2])
             H_well.append(H_intervals[-2])
-
             K_well.append(K_min)
             K_well.append(K_min)
             K_well.append(K_max)
             K_well.append(K_max)
             K_well.append(K_min)
             intervals+=1
-            fig.add_trace(go.Scatter(x=K_well, y=H_well, name='Интервал бурения<sup></sup>'))
+            plt.plot(K_well, H_well, ':r', label='Интервал бурения', lw=4)
+            plt.fill(K_well, H_well, 'r',alpha=0.2)
 
     H_int = []
     Ka_int = []
@@ -131,11 +122,18 @@ def CPG(H,Pre,H_course,H_conductor):
     K_well.append(K_max)
     K_well.append(K_min)
     intervals += 1
-    fig.add_trace(go.Scatter(x=K_well, y=H_well, name='Интервал бурения<sup></sup>'))
+    plt.plot(K_well, H_well, ':r', label='Интервал бурения', lw=4)
+    plt.fill(K_well, H_well, 'r', alpha=0.2)
+    plt.minorticks_on()
 
-    fig.update_yaxes(range=[H[-1]+500,-100 ])                   #Коэффициенты для масштаба?
-    fig.update_xaxes(range=[min(Ka)-0.1, max(Kgr)+0.1],side='top')
-    fig.show()
+    plt.xlim([min(Ka)-0.1,max(Kgr)+0.1])
+    plt.ylim([-100,H[-1]+200])
+    plt.legend()
+    plt.gca().invert_yaxis()
+    plt.grid(which='major')
+    plt.grid(which='minor', linestyle=':')
+    plt.tight_layout()
+    plt.show()
 
 
     intervals+=2
@@ -143,5 +141,5 @@ def CPG(H,Pre,H_course,H_conductor):
     H_intervals.insert(1,H_conductor)
     return H_intervals,intervals
 
-#a=CPG(H,Pre,H_course,H_conductor)
-#print(a)
+a=CPG(H,Pre,H_course,H_conductor)
+print(a)
